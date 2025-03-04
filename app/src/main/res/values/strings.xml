@@ -10,4 +10,8 @@
 
     <string name="save_image_success">图片保存成功</string>
     <string name="save_image_failed">图片保存失败</string>
+
+    <string name="chat_welcome">欢迎使用文案生成功能!我将使用根据你提供的图片和个性化平台风格生成文案，请告诉我你需要的文案风格！
+        如：请为我生成微博平台的文案。\n你也可以直接点击发送，我会根据图片自动生成适合的文案~</string>
+    <string name="chat_default">为图片生成个性化文案</string>
 </resources>

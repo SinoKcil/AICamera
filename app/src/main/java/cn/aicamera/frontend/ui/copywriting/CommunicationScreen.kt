@@ -1,232 +1,290 @@
 package cn.aicamera.frontend.ui.copywriting
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.getstream.chat.android.compose.ui.messages.MessagesScreen
-import io.getstream.chat.android.compose.ui.messages.attachments.factory.AttachmentsPickerTabFactories
-import io.getstream.chat.android.compose.ui.theme.ChatComponentFactory
-import io.getstream.chat.android.compose.ui.theme.ChatTheme
-import io.getstream.chat.android.compose.viewmodel.messages.MessageListViewModel
-import io.getstream.chat.android.compose.viewmodel.messages.MessagesViewModelFactory
-import io.getstream.chat.android.models.Channel
-import io.getstream.chat.android.models.ConnectionState
-import io.getstream.chat.android.models.User
-import io.getstream.chat.android.ui.common.state.messages.MessageMode
-import io.getstream.chat.android.ui.common.state.messages.composer.MessageComposerState
+import androidx.hilt.navigation.compose.hiltViewModel
+import cn.aicamera.frontend.R
+import cn.aicamera.frontend.model.Message
+import cn.aicamera.frontend.utils.FileUtils
+import cn.aicamera.frontend.viewmodel.ChatViewModel
+import coil.compose.AsyncImage
+import kotlin.math.floor
 
 @Composable
-fun CommunicationScreen(imagePath: Uri?){
+fun CommunicationScreen(
+    imageUris: MutableList<Uri>, // 传入的图片 URI 列表
+    viewModel: ChatViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
 
-    var bitmap : Bitmap? = null
-    try {
-        if(imagePath == null) throw NullPointerException("Image path is null")
-        val inputStream = context.contentResolver.openInputStream(imagePath)
-        bitmap = BitmapFactory.decodeStream(inputStream)
+    val messages by viewModel.messages.collectAsState()
+    val scrollState = rememberLazyListState()
 
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Text("图片加载失败或被删除")
+    val defaultText = stringResource(R.string.chat_default)
+    var inputText by remember { mutableStateOf(defaultText) }
+
+    // 上传照片
+    val iterator = imageUris.iterator()
+    var i = 0;var count = 0
+    while (iterator.hasNext()) {
+        val imageUri = iterator.next()
+        val file = FileUtils.uriToFile(uri = imageUri, context = context)
+        if (file == null) Toast.makeText(context, "第${i}张照片打开失败", Toast.LENGTH_LONG).show()
+        else {
+            viewModel.uploadImageToServer(
+                file, { count++ },
+                {
+                    Toast.makeText(context, "第${i}张照片上传失败", Toast.LENGTH_LONG).show()
+                    iterator.remove()
+                }
+            )
+        }
+        i++
     }
-    Column {
-        var boxHeight by remember { mutableStateOf(Math.floor(configuration.screenHeightDp*0.2).toInt()) }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(boxHeight.dp)
-                .drawBehind { // 绘制一条边框底部的线
-                    val strokeWidth = 1f * density // 线的粗细，1为1dp
-                    val y = size.height // 高度，size.height为box的高度
-                    drawLine(
-                        Color.LightGray,
-                        Offset(0f, y),
-                        Offset(size.width, y),
-                        strokeWidth
-                    )
-                },
-            contentAlignment = Alignment.Center,
-        ){
-            if(bitmap != null){
-                val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-                val targetWidth = (boxHeight * aspectRatio).toInt()
-                Image(
-                    bitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, boxHeight, false).asImageBitmap(),
-                    contentDescription = "待处理图片",
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(aspectRatio),
-                )
+    Column(Modifier.fillMaxSize()) {
+        ImageGallery(imageUris,count == imageUris.size) // 顶部图片展示
+
+        LazyColumn(
+            state = scrollState,
+            reverseLayout = true, // 最新消息在底部
+            modifier = Modifier.weight(1f)
+        ) {
+            items(messages.reversed()) { message ->
+                ChatBubble(message)
             }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.9f)
-        ){
-            ChatScreen(context)
-        }
-    }
-}
-@Composable
-fun ChatScreen(context: Context){
-    val channelId = "messaging:general"
-    val viewModelFactory = MessagesViewModelFactory(context = context,channelId = channelId)
-//    val messagesViewModel = viewModelFactory.create<MessageListViewModel>()
-    val viewModel = viewModelFactory.create(MessageListViewModel::class.java)
-    ChatTheme(
-        componentFactory = CustomChatComponentFactory()
-    ) {
-        MessagesScreen(
-            viewModelFactory = viewModelFactory
+
+        ChatInputField(
+            inputText = inputText,
+            onTextChange = { inputText = it },
+            onSendMessage = {
+                if (inputText.isNotBlank()) {
+                    viewModel.sendMessage(inputText.trim())
+                    inputText = ""
+                }
+            }
         )
     }
 }
 
+/**
+ * 聊天气泡
+ */
 @Composable
-fun DeprecatedFunctions(){
-    // 自定义头部，无状态显示
-    Column {
+fun ChatBubble(message: Message) {
+    val arrangement = if (message.isUser) Arrangement.End else Arrangement.Start
+    val backgroundColor = if (message.isUser) MaterialTheme.colorScheme.surfaceVariant else Color.LightGray
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val boxWidth = floor(screenWidth*0.7f.toDouble())
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = arrangement
+    ){
+        // AI头像
+        if(!message.isUser){
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(top = 8.dp, start = 8.dp)
+                    .background(Color.Black, shape = RoundedCornerShape(48.dp))
+            )
+        }
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .background(
-                    color =
-                    if (isSystemInDarkTheme()) Color.Black
-                    else Color.White
-                ),
+                .widthIn(max = boxWidth.dp)
+                .heightIn(min = 56.dp)
+                .padding(8.dp)
+                .background(backgroundColor, shape = RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = "自动文案生成",
-                modifier = Modifier.padding(horizontal = 16.dp),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                text = message.text,
+                color = Color.Black,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 5.dp)
             )
         }
-        // 消息展示
-//        MessageList(
-//            modifier = Modifier.weight(1f),
-//            viewModel = viewModel,
-//                onMessageLongPress = { message -> /* 处理长按 */ }
-//        )
-        // 自定义输入框
-
+        // 用户头像
+        if(message.isUser){
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(top = 8.dp, end = 8.dp)
+                    .background(Color.Black, shape = RoundedCornerShape(48.dp))
+            )
+        }
     }
 }
 
-class CustomChatComponentFactory : ChatComponentFactory {
-    val defaultTabFactories = AttachmentsPickerTabFactories.defaultFactories(
-        takeImageEnabled = false, // Disable camera
-        recordVideoEnabled = false // Disable video recording
+/**
+ * 展示图片
+ */
+@Composable
+fun ImageGallery(imageUris: List<Uri>,finishUpload: Boolean) {
+    if (imageUris.isNotEmpty()&&finishUpload) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.LightGray)
+                .padding(8.dp)
+        ) {
+            Text(
+                text = "图片预览",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(4.dp)
+            )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(imageUris.take(9)) { uri -> // 最多显示 9 张图片
+                    ImageThumbnail(uri)
+                }
+            }
+        }
+    }
+    else{
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+            contentAlignment = Alignment.Center
+        ){
+            Text(
+                text = "图片上传中...",
+                fontSize = 24.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun ImageThumbnail(uri: Uri) {
+    AsyncImage(
+        model = uri,
+        contentDescription = "预览图",
+        modifier = Modifier
+            .size(80.dp) // 缩略图大小
+            .clip(RoundedCornerShape(8.dp))
+            .border(2.dp, Color.Gray, RoundedCornerShape(8.dp)),
+        contentScale = ContentScale.Crop
     )
-    @Composable
-    override fun RowScope.MessageComposerIntegrations(
-        state: MessageComposerState,
-        onAttachmentsClick: () -> Unit,
-        onCommandsClick: () -> Unit,
+}
+
+/**
+ * 输入框部分
+ */
+@Composable
+fun ChatInputField(
+    inputText: String,
+    onTextChange: (String) -> Unit,
+    onSendMessage: () -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Only keep the attachments button
+        TextField(
+            value = inputText,
+            onValueChange = onTextChange,
+            modifier = Modifier.weight(1f),
+            placeholder = { Text("输入消息...") },
+        )
         IconButton(
             modifier = Modifier
                 .size(48.dp)
                 .padding(12.dp),
-            onClick = onAttachmentsClick
-        ){
-            Icon( // 附件图标颜色
-                imageVector = Icons.Filled.Attachment,
+            onClick = onSendMessage
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Send,
                 contentDescription = "Send",
-                tint = if(isSystemInDarkTheme()) Color.White else LocalContentColor.current
             )
-            // TODO：修改附件选项中的按钮，只保留发送图片
         }
     }
+}
 
-    @Composable
-    override fun RowScope.MessageListHeaderCenterContent(
-        modifier: Modifier,
-        channel: Channel,
-        currentUser: User?,
-        typingUsers: List<User>,
-        messageMode: MessageMode,
-        onHeaderTitleClick: (Channel) -> Unit,
-        connectionState: ConnectionState,
-    ) {
-        // Your implementation for the message list header center content
-        val title = when (messageMode) {
-            MessageMode.Normal -> ChatTheme.channelNameFormatter.formatChannelName(channel, currentUser)
-            is MessageMode.MessageThread -> "" // 原本是资源型字符串，找不到，遂放弃
-        }
+@Preview(showSystemUi = true)
+@Composable
+fun ChatBubble() {
+    val arrangement = if (false) Arrangement.End else Arrangement.End
+    val backgroundColor = if (false) MaterialTheme.colorScheme.surfaceVariant else Color(0xFFEAE1D9)
 
-        Column(
-            modifier = modifier
-                .height(IntrinsicSize.Max)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { onHeaderTitleClick(channel) },
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val boxWidth = floor(screenWidth*0.7f.toDouble())
+    Row(
+        modifier = Modifier.padding(top = 100.dp).fillMaxWidth(),
+        horizontalArrangement = arrangement
+    ){
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(top = 8.dp, start = 8.dp)
+                .background(Color.Black, shape = RoundedCornerShape(48.dp))
+        )
+        Box(
+            modifier = Modifier
+                .width(boxWidth.dp)
+                .heightIn(min = 56.dp)
+                .padding(8.dp)
+                .background(backgroundColor, shape = RoundedCornerShape(8.dp))
         ) {
             Text(
-                modifier = Modifier.testTag("Stream_ChannelName"),
-                text = title,
-                style = ChatTheme.typography.title3Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = ChatTheme.colors.textHighEmphasis,
+                text = stringResource(R.string.chat_welcome),
+                color = Color.Black,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.padding(start = 4.dp, end = 2.dp, top = 2.dp, bottom = 2.dp)
             )
         }
     }
+}
 
 
-}
-@Preview(showBackground = true)
-@Composable
-fun Test(){
-}

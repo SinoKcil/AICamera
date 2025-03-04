@@ -15,10 +15,10 @@ fun AppNavHost(navController: NavHostController) {
             MainScreen(navController = navController)
         }
 
-        // 相机页面
-        composable("camera") {
-            CameraScreen()
-        }
+//        // 相机页面
+//        composable("camera") {
+//            CameraScreen()
+//        }
 //        // 相册页面
 //        composable("gallery") {
 //            GalleryScreen()

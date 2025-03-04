@@ -70,6 +70,11 @@ dependencies {
     implementation(libs.stream.chat.android.offline)
     implementation(libs.stream.chat.android.compose)
 
+    implementation(libs.retrofit2.retrofit)
+    implementation(libs.com.squareup.retrofit2.converter.gson)
+    implementation(libs.com.github.kittinunf.fuel.fuel2)
+    implementation(libs.coil.kt.coil.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cn.aicamera.frontend.R
 import cn.aicamera.frontend.ui.camera.CameraActivity
+import cn.aicamera.frontend.ui.copywriting.CopywritingActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +82,7 @@ fun MainScreen(navController: NavController) {
         ) {
             // =照相页面
             RoundedButton(
-                text = "拍照",
+                text = "智能拍照引导",
                 onClick = {
                     val intent=Intent(mContext,CameraActivity::class.java)
                     mContext.startActivity(intent)
@@ -90,11 +91,14 @@ fun MainScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-//            // 相册页面
-//            RoundedButton(
-//                text = "Go to Gallery",
-//                onClick = { navController.navigate("gallery") }
-//            )
+            // 相册页面
+            RoundedButton(
+                text = "图片自动生成文案",
+                onClick = {
+                    val intent=Intent(mContext,CopywritingActivity::class.java)
+                    mContext.startActivity(intent)
+                }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
