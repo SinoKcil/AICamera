@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">frontend</string>
+    <string name="camera_permission_required">应用需要使用相机权限\n应用将获取相机内的实时影像\n图片将自动使用本地模型进行分析，用于构图引导\n**所有的图像都不会在没有您授权的情况下保存到本地或云端**
+        \n\n如果没有弹出请求框\n请前往**“设置”**页面手动设置</string>
+    <string name="grant_permission">我已知晓\n确认授权使用相机\n并将图片用于引导</string>
+    <string name="camera_permission_denied_permanently">相机权限获取失败，请前往设置页面手动设置</string>
+
+    <string name="camera_preview_title">图片预览</string>
+    <string name="camera_preview_notice">预览状态下，图片有一定压缩，不代表最终效果</string>
+
+    <string name="save_image_success">图片保存成功</string>
+    <string name="save_image_failed">图片保存失败</string>
+</resources>
