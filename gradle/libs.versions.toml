@@ -22,12 +22,14 @@ materialIconsExtended = "1.6.0-alpha08"
 navigationCompose = "2.8.6"
 cameraLifecycle = "1.4.1"
 cameraView = "1.4.1"
+navigationComposeVersion = "2.7.5"
 retrofitVersion = "2.9.0"
 roomKtx = "2.6.1"
 squareupConverterGsonVersion = "2.9.0"
 streamChat = "6.12.0"
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCore" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCamera2" }
@@ -35,6 +37,7 @@ androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayo
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-navigation-compose-v275 = { module = "androidx.navigation:navigation-compose", version.ref = "navigationComposeVersion" }
 chatkit = { module = "com.github.stfalcon-studio:chatkit", version.ref = "chatkit" }
 coil-kt-coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 com-github-kittinunf-fuel-fuel2 = { module = "com.github.kittinunf.fuel:fuel", version.ref = "githubFuelVersion" }

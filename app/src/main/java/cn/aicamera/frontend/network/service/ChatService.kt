@@ -1,10 +1,12 @@
 package cn.aicamera.frontend.network.service
 
+import cn.aicamera.frontend.model.GeneralResponse
 import cn.aicamera.frontend.model.MessageRequest
-import cn.aicamera.frontend.model.UploadResponse
+import cn.aicamera.frontend.model.SuccessResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -16,7 +18,7 @@ import retrofit2.http.Streaming
 interface ChatService {
     // 发送文本消息
     @POST("/chat/send")
-    suspend fun sendMessage(@Body message: MessageRequest)
+    suspend fun sendMessage(@Body message: MessageRequest) : Response<SuccessResponse>
 
     // 监听SSE消息流
     @GET("/chat/stream")
@@ -26,5 +28,5 @@ interface ChatService {
     // 上传图片
     @Multipart
     @POST("/chat/upload")
-    suspend fun uploadImage(@Part image: MultipartBody.Part): UploadResponse
+    suspend fun uploadImage(@Part image: MultipartBody.Part): Response<GeneralResponse<String>>
 }

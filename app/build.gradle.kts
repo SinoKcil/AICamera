@@ -44,7 +44,7 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.12.0") // 这个包需要使用这个版本
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -67,13 +67,12 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
-    implementation(libs.stream.chat.android.offline)
-    implementation(libs.stream.chat.android.compose)
-
     implementation(libs.retrofit2.retrofit)
     implementation(libs.com.squareup.retrofit2.converter.gson)
     implementation(libs.com.github.kittinunf.fuel.fuel2)
     implementation(libs.coil.kt.coil.compose)
+
+    implementation("com.google.accompanist:accompanist-permissions:0.37.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

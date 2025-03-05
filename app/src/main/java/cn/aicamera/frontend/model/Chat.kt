@@ -4,7 +4,6 @@ package cn.aicamera.frontend.model
 
 // 消息数据类
 data class MessageRequest(val text: String)
-data class UploadResponse(val url: String)
 data class Message(
     val text: String,
     val isUser: Boolean

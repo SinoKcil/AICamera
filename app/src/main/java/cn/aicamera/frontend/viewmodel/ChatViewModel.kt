@@ -5,10 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cn.aicamera.frontend.model.Message
 import cn.aicamera.frontend.model.MessageRequest
-import cn.aicamera.frontend.network.RetrofitClient
+import cn.aicamera.frontend.network.service.ChatService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,7 +19,9 @@ import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
-class ChatViewModel @Inject constructor() : ViewModel() {
+class ChatViewModel @Inject constructor(
+    private val chatService: ChatService
+) : ViewModel() {
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
 
@@ -34,7 +35,7 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     fun sendMessage(text: String) {
         viewModelScope.launch {
             try {
-//                RetrofitClient.chatService.sendMessage(MessageRequest(text))
+                chatService.sendMessage(MessageRequest(text))
                 _messages.value += Message(text = text, isUser = true)
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "发送消息失败: ${e.message}")
@@ -51,11 +52,13 @@ class ChatViewModel @Inject constructor() : ViewModel() {
 
         viewModelScope.launch {
             try {
-                delay(1000)
-                onSuccess("this is test")
-
-//                val response = RetrofitClient.chatService.uploadImage(imagePart)
-//                onSuccess(response.url) // 返回图片的URL
+//                delay(1000)
+//                onSuccess("this is test")
+                val response = chatService.uploadImage(imagePart)
+                if(response.body()!!.success && response.body()!!.response!=null)
+                {
+                    response.body()!!.response?.let { onSuccess(it) } // 返回图片的URL
+                }
             } catch (e: Exception) {
                 onFailure(e.message ?: "上传失败")
             }
@@ -71,7 +74,7 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     private fun startSSEListener() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val response = RetrofitClient.chatService.listenMessages().execute()
+                val response = chatService.listenMessages().execute()
                 response.body()?.let { body ->
                     body.byteStream().bufferedReader().useLines { lines ->
                         lines.forEach { line ->
