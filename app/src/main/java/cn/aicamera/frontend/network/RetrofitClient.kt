@@ -16,9 +16,10 @@ import javax.inject.Singleton
 object NetworkModule {
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+    fun provideOkHttpClient(authInterceptor: AuthInterceptor,typeInterceptor: TypeInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(typeInterceptor)
             .build()
     }
 
@@ -26,7 +27,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://backend-url.com/") // TODO: 修改为后端URL
+            .baseUrl("http://192.168.43.33:8080") // TODO: 修改为后端URL
             .client(okHttpClient) // 配置拦截器
             .addConverterFactory(GsonConverterFactory.create())
             .build()

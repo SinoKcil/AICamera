@@ -35,7 +35,7 @@ class ChatViewModel @Inject constructor(
     fun sendMessage(text: String) {
         viewModelScope.launch {
             try {
-                chatService.sendMessage(MessageRequest(text))
+                chatService.sendMessage(text)
                 _messages.value += Message(text = text, isUser = true)
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "发送消息失败: ${e.message}")

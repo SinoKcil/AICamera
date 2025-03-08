@@ -17,6 +17,9 @@ class AuthInterceptor @Inject constructor(
                 if (!token.isNullOrEmpty()) {
                     addHeader("Authorization", "Bearer $token") // 自动加token
                 }
+                else {
+                    addHeader("Authorization", "") // 没有token也要加
+                }
             }
             .build()
         return chain.proceed(request)

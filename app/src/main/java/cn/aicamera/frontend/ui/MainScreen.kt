@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import cn.aicamera.frontend.R
 import cn.aicamera.frontend.model.BottomNavItem
 import cn.aicamera.frontend.ui.camera.CameraActivity
+import cn.aicamera.frontend.ui.component.BottomBar
 import cn.aicamera.frontend.ui.copywriting.CopywritingActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +93,7 @@ fun MainScreen(navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // 文案生成页面
             Column(
@@ -147,38 +148,6 @@ fun ImageButton(onClick: () -> Unit, imageId: Int, description: String) {
             .clip(RoundedCornerShape(15.dp)) // 圆角裁剪
             .clickable(onClick = onClick) // 点击事
     )
-}
-
-@Composable
-fun BottomBar(currentRoute: String, navController: NavController) {
-    BottomAppBar(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-    ) {
-        val items = listOf(
-            BottomNavItem.Home,
-            BottomNavItem.Profile
-        )
-        NavigationBar {
-            items.forEach { item ->
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            item.icon,
-                            contentDescription = item.label,
-                        )
-                    },
-                    label = { Text(item.label) },
-                    selected = currentRoute == item.route,
-                    onClick = {
-                        navController.navigate(item.route) {
-                            popUpTo("home") { inclusive = false } // 不存在页面时，跳转到home
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
-        }
-    }
 }
 
 @Preview
