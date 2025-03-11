@@ -8,6 +8,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
+import cn.aicamera.frontend.common.RouteConfig
 import cn.aicamera.frontend.model.BottomNavItem
 
 @Composable
@@ -32,7 +33,7 @@ fun BottomBar(currentRoute: String, navController: NavController) {
                     selected = currentRoute == item.route,
                     onClick = {
                         navController.navigate(item.route) {
-                            popUpTo("home") { inclusive = false } // 不存在页面时，跳转到home
+                            popUpTo(RouteConfig.HOME.toString()) { inclusive = false } // 不存在页面时，跳转到home
                             launchSingleTop = true
                         }
                     }

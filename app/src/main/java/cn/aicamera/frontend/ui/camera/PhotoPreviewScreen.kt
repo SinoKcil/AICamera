@@ -43,13 +43,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import cn.aicamera.frontend.R
 import cn.aicamera.frontend.ui.component.ShareSheet
 import cn.aicamera.frontend.ui.copywriting.CopywritingActivity
+import cn.aicamera.frontend.viewmodel.ChatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PhotoPreviewScreen(bitmap: Bitmap, onDismiss: () -> Unit) {
+fun PhotoPreviewScreen(bitmap: Bitmap, onDismiss: () -> Unit,chatViewModel: ChatViewModel= hiltViewModel()) {
     val context = LocalContext.current
 
     // 是否有存储权限
@@ -121,7 +123,7 @@ fun PhotoPreviewScreen(bitmap: Bitmap, onDismiss: () -> Unit) {
                 if (bitmap != null) {
                     Image(
                     // 直接放照片会尺寸过大而崩溃
-                    bitmap = Bitmap.createScaledBitmap(bitmap, (bitmap.getWidth()*0.7).toInt(), (bitmap.getHeight()*0.6).toInt(), false).asImageBitmap(),
+                    bitmap = Bitmap.createScaledBitmap(bitmap, (bitmap.getWidth()*0.7).toInt(), (bitmap.getHeight()*0.65).toInt(), false).asImageBitmap(),
                     contentDescription = "Captured Photo",
                     modifier = Modifier
                         .fillMaxSize()
@@ -139,7 +141,10 @@ fun PhotoPreviewScreen(bitmap: Bitmap, onDismiss: () -> Unit) {
                     .weight(0.4f)
                     .background(MaterialTheme.colorScheme.primaryContainer),
             ){
-                Column {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text= stringResource(R.string.camera_preview_notice),
                     )
@@ -224,6 +229,8 @@ fun PhotoPreviewScreen(bitmap: Bitmap, onDismiss: () -> Unit) {
                                                         CopywritingActivity::class.java
                                                     )
                                                     intent.putExtra("image_path", uri as Uri)
+                                                    chatViewModel.clearImages()
+                                                    chatViewModel.addImage(uri)
                                                     context.startActivity(intent)
                                                 }
                                             } else {

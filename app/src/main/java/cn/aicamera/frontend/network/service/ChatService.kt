@@ -29,5 +29,5 @@ interface ChatService {
     // 上传图片
     @Multipart
     @POST("/chat/upload")
-    suspend fun uploadImage(@Part image: MultipartBody.Part): Response<GeneralResponse<String>>
+    suspend fun uploadImage(@Part image: MultipartBody.Part): Response<SuccessResponse>
 }

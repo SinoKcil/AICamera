@@ -36,7 +36,7 @@ class SelectMultiplePicture : ActivityResultContract<Unit?, List<Uri>?>() {
         return Intent(Intent.ACTION_PICK).setType("image/*").putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true)
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): List<Uri> {
+    override fun parseResult(resultCode: Int, intent: Intent?): List<Uri>? {
         return if (resultCode == Activity.RESULT_OK && intent != null) {
             val uriList = mutableListOf<Uri>()
             // 获取单张图片
@@ -52,7 +52,10 @@ class SelectMultiplePicture : ActivityResultContract<Unit?, List<Uri>?>() {
                 }
             }
             uriList
-        } else {
+        } else if(resultCode == Activity.RESULT_CANCELED) {
+            return null
+        }
+        else {
             emptyList()
         }
     }

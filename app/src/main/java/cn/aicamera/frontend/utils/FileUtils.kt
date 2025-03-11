@@ -19,7 +19,7 @@ object FileUtils {
                 val inputStream: InputStream? = contentResolver.openInputStream(uri)
                 if (inputStream != null) {
                     // 创建一个临时文件来保存内容
-                    val file = File(context.cacheDir, "temp_file")
+                    val file = File(context.cacheDir, "temp_file_${sanitizeFileName(uri.path)}")
                     val outputStream = FileOutputStream(file)
                     val buffer = ByteArray(4 * 1024) // 4KB 缓冲区
                     var read: Int
@@ -37,4 +37,11 @@ object FileUtils {
         }
         return null
     }
+}
+
+/**
+ * 格式化uri的名称，使其合法
+ */
+fun sanitizeFileName(path: String?): String {
+    return path?.replace(Regex("[^a-zA-Z0-9_.-]"), "_") ?: "temp_file"
 }

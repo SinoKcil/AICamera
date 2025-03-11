@@ -1,34 +1,24 @@
 package cn.aicamera.frontend.ui.copywriting
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
-import cn.aicamera.frontend.R
-import cn.aicamera.frontend.common.SelectMultiplePicture
-import cn.aicamera.frontend.model.Message
+import androidx.navigation.compose.rememberNavController
+import cn.aicamera.frontend.common.RouteConfig
+import cn.aicamera.frontend.ui.AppNavHost
 import cn.aicamera.frontend.ui.theme.CameraAppTheme
-import cn.aicamera.frontend.viewmodel.ChatViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class CopywritingActivity : ComponentActivity() {
     private val selectedImageUris = mutableStateListOf<Uri>()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,90 +26,22 @@ class CopywritingActivity : ComponentActivity() {
 
         val imagePath: Uri? = intent.getParcelableExtra("image_path")
         setContent {
-            val jumpCommunication = remember { mutableStateOf(false) }
-            if (imagePath == null) {
-                val showGallery = remember { mutableStateOf(false) }
-                checkAndRequestPermission {
-                    showGallery.value = true
-                }
-                openGallery { uris ->
-                    selectedImageUris.clear()
-                    selectedImageUris.addAll(uris)
-                    showGallery.value = false
-                }
-            } else {
-                selectedImageUris.add(imagePath)
-                jumpCommunication.value = true
-            }
-            if (jumpCommunication.value) {
-                CameraAppTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        val imageUris by remember { mutableStateOf(selectedImageUris) }
-                        val viewModel: ChatViewModel = hiltViewModel()
-                        viewModel.initMessageBox()
-                        viewModel.addMessage(
-                            Message(
-                                text = stringResource(R.string.chat_welcome),
-                                isUser = false
-                            )
-                        )
-                        CommunicationScreen(imageUris)
+            CameraAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    if (imagePath == null) {
+                        AppNavHost(RouteConfig.IMAGE_CHOOSE)
+                    } else {
+                        AppNavHost(RouteConfig.CHAT)
                     }
                 }
             }
         }
     }
-
-    /**
-     * 检查权限并打开相册
-     */
-    private fun checkAndRequestPermission(onPermissionGet: () -> Unit) {
-        val permissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                onPermissionGet()
-            } else {
-                Toast.makeText(this, "需要存储权限才能访问相册", Toast.LENGTH_SHORT).show()
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13+
-            if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED) {
-                onPermissionGet()
-            } else {
-                permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-            }
-        } else { // Android 12 及以下
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                onPermissionGet()
-            } else {
-                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        }
-    }
-
-    @Composable
-    private fun openGallery(onSelectPicture: (List<Uri>) -> Unit) {
-//        pickImagesLauncher.launch(arrayOf("image/*")) // 仅选择图片
-        var openGalleryLauncher: ManagedActivityResultLauncher<Unit?, List<Uri>?>? =
-            rememberLauncherForActivityResult(contract = SelectMultiplePicture()) { uris ->
-                if (uris != null && uris.size > 0 && uris.size < 10) {
-                    onSelectPicture(uris)
-                } else {
-                    Toast.makeText(this, "请选择1~9张图片", Toast.LENGTH_LONG).show()
-                }
-            }
-        SideEffect {
-            if (openGalleryLauncher != null) {
-                openGalleryLauncher.launch(null)
-            }
-        }
-
-    }
 }
+
 //    @Composable
 //    private fun openGallery() {
 //        var showGallery = remember { mutableStateOf(true) }

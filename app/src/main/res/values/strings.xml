@@ -5,6 +5,12 @@
     <string name="grant_permission">我已知晓\n确认授权使用相机\n并将图片用于引导</string>
     <string name="camera_permission_denied_permanently">相机权限获取失败，请前往设置页面手动设置</string>
 
+    <string name="grade_perfect">简直是完美的作品！</string>
+    <string name="grade_great">做得很好，再调整一下就更棒了</string>
+    <string name="grade_good">好起来了，再加加油！</string>
+    <string name="grade_bad">可能角度有些不对，再调整一下吧</string>
+    <string name="grade_worst">可能换个位置会比较合适</string>
+
     <string name="camera_preview_title">图片预览</string>
     <string name="camera_preview_notice">预览状态下，图片有一定压缩，不代表最终效果</string>
 

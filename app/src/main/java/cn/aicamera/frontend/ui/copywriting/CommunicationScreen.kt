@@ -1,5 +1,8 @@
 package cn.aicamera.frontend.ui.copywriting
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,15 +24,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,87 +58,152 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import cn.aicamera.frontend.MainActivity
 import cn.aicamera.frontend.R
 import cn.aicamera.frontend.model.Message
 import cn.aicamera.frontend.utils.FileUtils
 import cn.aicamera.frontend.viewmodel.ChatViewModel
+import cn.aicamera.frontend.viewmodel.UserViewModel
 import coil.compose.AsyncImage
 import kotlin.math.floor
 
+@SuppressLint("StateFlowValueCalledInComposition")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunicationScreen(
-    imageUris: MutableList<Uri>, // 传入的图片 URI 列表
-    viewModel: ChatViewModel = hiltViewModel()
+    chatViewModel: ChatViewModel,
+    userViewModel: UserViewModel
 ) {
     val context = LocalContext.current
-
-    val messages by viewModel.messages.collectAsState()
+    val initialized = remember { mutableStateOf(false) }
+    if (!initialized.value) {
+        chatViewModel.initMessageBox()
+        chatViewModel.addMessage(
+            Message(
+                text = stringResource(R.string.chat_welcome),
+                isUser = false
+            )
+        )
+        initialized.value = true
+    }
+    val loaded = remember { mutableStateOf(false) }
+    val originImageUris by chatViewModel.imageUris.collectAsState() // 传入的图片 URI 列表
+    val imageUris = remember { mutableStateOf(emptyList<Uri>()) }
+    val messages by chatViewModel.messages.collectAsState()
     val scrollState = rememberLazyListState()
 
     val defaultText = stringResource(R.string.chat_default)
     var inputText by remember { mutableStateOf(defaultText) }
 
     // 上传照片
-    val iterator = imageUris.iterator()
-    var i = 0;var count = 0
-    while (iterator.hasNext()) {
-        val imageUri = iterator.next()
-        val file = FileUtils.uriToFile(uri = imageUri, context = context)
-        if (file == null) Toast.makeText(context, "第${i}张照片打开失败", Toast.LENGTH_LONG).show()
-        else {
-            viewModel.uploadImageToServer(
-                file, { count++ },
-                {
-                    Toast.makeText(context, "第${i}张照片上传失败", Toast.LENGTH_LONG).show()
-                    iterator.remove()
+    var count = remember { mutableStateOf(0) }
+    if (!loaded.value) {
+        originImageUris.forEachIndexed { index, imageUri ->
+            val file = FileUtils.uriToFile(uri = imageUri, context = context)
+            if (file == null) Toast.makeText(
+                context,
+                "第${index + 1}张照片打开失败",
+                Toast.LENGTH_LONG
+            ).show()
+            else {
+                chatViewModel.uploadImageToServer(
+                    file, {
+                        count.value++
+                        imageUris.value += imageUri
+                    },
+                    { message ->
+                        Toast.makeText(
+                            context,
+                            "第${index + 1}张照片上传失败,${message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            }
+        }
+        loaded.value = true
+    }
+    userViewModel.getProfile({},{})
+    userViewModel.loadAvatar(context, onFailed = {message->
+        Toast.makeText(context,"获取用户头像失败:$message",Toast.LENGTH_LONG).show()
+    })
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+                title = {
+                },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        val intent = Intent(context, MainActivity::class.java)
+                        context.startActivity(intent)
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(innerPadding)) {
+            ImageGallery(imageUris.value, count.value == imageUris.value.size) // 顶部图片展示
+            HorizontalDivider(thickness = 1.dp)
+            Spacer(modifier = Modifier.height(5.dp))
+            HorizontalDivider(thickness = 1.dp)
+            LazyColumn(
+                state = scrollState,
+                reverseLayout = true, // 最新消息在底部
+                modifier = Modifier.weight(1f)
+            ) {
+                items(messages.reversed()) { message ->
+                    ChatBubble(message,userViewModel.avatar.value)
+                }
+            }
+
+            ChatInputField(
+                inputText = inputText,
+                onTextChange = { inputText = it },
+                onSendMessage = {
+                    if (inputText.isNotBlank()) {
+                        chatViewModel.sendMessage(inputText.trim())
+                        inputText = ""
+                    }
                 }
             )
         }
-        i++
     }
-    Column(Modifier.fillMaxSize()) {
-        ImageGallery(imageUris,count == imageUris.size) // 顶部图片展示
 
-        LazyColumn(
-            state = scrollState,
-            reverseLayout = true, // 最新消息在底部
-            modifier = Modifier.weight(1f)
-        ) {
-            items(messages.reversed()) { message ->
-                ChatBubble(message)
-            }
-        }
-
-        ChatInputField(
-            inputText = inputText,
-            onTextChange = { inputText = it },
-            onSendMessage = {
-                if (inputText.isNotBlank()) {
-                    viewModel.sendMessage(inputText.trim())
-                    inputText = ""
-                }
-            }
-        )
-    }
 }
 
 /**
  * 聊天气泡
  */
+
+/**
+ * 聊天气泡
+ */
 @Composable
-fun ChatBubble(message: Message) {
+fun ChatBubble(message: Message,userAvatar:Bitmap?) {
     val arrangement = if (message.isUser) Arrangement.End else Arrangement.Start
-    val backgroundColor = if (message.isUser) MaterialTheme.colorScheme.surfaceVariant else Color.LightGray
+    val backgroundColor =
+        if (message.isUser) MaterialTheme.colorScheme.surfaceVariant else Color.LightGray
 
     val screenWidth = LocalConfiguration.current.screenWidthDp
-    val boxWidth = floor(screenWidth*0.7f.toDouble())
+    val boxWidth = floor(screenWidth * 0.7f.toDouble())
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = arrangement
-    ){
+    ) {
         // AI头像
-        if(!message.isUser){
+        if (!message.isUser) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -152,13 +227,22 @@ fun ChatBubble(message: Message) {
             )
         }
         // 用户头像
-        if(message.isUser){
+        if (message.isUser) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .padding(top = 8.dp, end = 8.dp)
                     .background(Color.Black, shape = RoundedCornerShape(48.dp))
-            )
+            ) {
+                AsyncImage(
+                    model = userAvatar,
+                    contentDescription = "Avatar",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
     }
 }
@@ -166,14 +250,18 @@ fun ChatBubble(message: Message) {
 /**
  * 展示图片
  */
+
+/**
+ * 展示图片
+ */
 @Composable
-fun ImageGallery(imageUris: List<Uri>,finishUpload: Boolean) {
-    if (imageUris.isNotEmpty()&&finishUpload) {
+fun ImageGallery(imageUris: List<Uri>, finishUpload: Boolean) {
+    if (imageUris.isNotEmpty() && finishUpload) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.LightGray)
                 .padding(8.dp)
+
         ) {
             Text(
                 text = "图片预览",
@@ -190,14 +278,18 @@ fun ImageGallery(imageUris: List<Uri>,finishUpload: Boolean) {
                 }
             }
         }
-    }
-    else{
+    } else {
         Box(
-            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 20.dp),
             contentAlignment = Alignment.Center
-        ){
+        ) {
             Text(
-                text = "图片上传中...",
+                text = when {
+                    finishUpload -> "图片上传失败"
+                    else -> "图片上传中..."
+                },
                 fontSize = 24.sp
             )
         }
@@ -216,6 +308,10 @@ fun ImageThumbnail(uri: Uri) {
         contentScale = ContentScale.Crop
     )
 }
+
+/**
+ * 输入框部分
+ */
 
 /**
  * 输入框部分
@@ -259,11 +355,13 @@ fun ChatBubble() {
     val backgroundColor = if (false) MaterialTheme.colorScheme.surfaceVariant else Color(0xFFEAE1D9)
 
     val screenWidth = LocalConfiguration.current.screenWidthDp
-    val boxWidth = floor(screenWidth*0.7f.toDouble())
+    val boxWidth = floor(screenWidth * 0.7f.toDouble())
     Row(
-        modifier = Modifier.padding(top = 100.dp).fillMaxWidth(),
+        modifier = Modifier
+            .padding(top = 100.dp)
+            .fillMaxWidth(),
         horizontalArrangement = arrangement
-    ){
+    ) {
         Box(
             modifier = Modifier
                 .size(48.dp)

@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -78,7 +79,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedMutableState", "PermissionLaunchedDuringComposition")
 @Composable
-fun ProfileScreen(navController: NavController, viewModel: UserViewModel = hiltViewModel()) {
+fun ProfileScreen(navController: NavController, viewModel: UserViewModel) {
     val context = LocalContext.current
     val currentRoute by remember { mutableStateOf(BottomNavItem.Profile.route) }
 
@@ -113,7 +114,7 @@ fun ProfileScreen(navController: NavController, viewModel: UserViewModel = hiltV
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("相机名称") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     // 设置按钮
                     IconButton(onClick = { navController.navigate("settings") }) {
